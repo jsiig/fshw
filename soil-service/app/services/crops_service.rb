@@ -21,4 +21,14 @@ class CropsService
   def fetch_all_crops
     CROPS
   end
+
+  def get_crop(value)
+    crop = CROPS.detect { |crop| crop[:value] == value }
+    return crop unless crop.nil?
+
+    raise CropNotFoundError
+  end
+end
+
+class CropNotFoundError < StandardError
 end
