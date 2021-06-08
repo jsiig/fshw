@@ -56,7 +56,7 @@ export default class Table extends PureComponent<Props, State> {
     </div>
 
   renderCropCell = (field: Field, seasonalCrop: SeasonalCrop) =>
-    <div className="table__cell table__cell--center table__cell--with-select">
+    <div className="table__cell table__cell--center table__cell--with-select" key={seasonalCrop.year}>
       <CropSelect
         selectedCrop={seasonalCrop.crop}
         allCrops={this.state.allCrops}
