@@ -14,11 +14,11 @@ class HumusBalanceController < ActionController::Base
   end
 
   private
+  def humus_balance_params
+    params.require(:fields_with_crop_values)
+  end
 
   def humus_balance_service
-    # If we were doing an insert operation, this'd have to use
-    # strong params. However, since this is a simple calculation
-    # not writing to any DB, this is fine for now.
-    HumusBalanceService.new(*params[:fields_with_crop_values])
+    HumusBalanceService.new(*humus_balance_params)
   end
 end
