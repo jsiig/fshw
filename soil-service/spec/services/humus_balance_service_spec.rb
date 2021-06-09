@@ -50,7 +50,7 @@ RSpec.describe HumusBalanceService do
     end
   end
 
-  describe 'with multiple fields' do
+  describe 'multiple fields' do
     describe '#calculate' do
       let(:crop1) { { value: 1, label: 'TestCropLabel', humus_delta: 2 } }
       let(:crop2) { { value: 2, label: 'TestCropLabel2', humus_delta: -3 } }
