@@ -1,33 +1,36 @@
 class HumusBalanceService
-  attr_reader :crop_values
+  attr_reader :crop_fields
 
-  BIGDECIMAL_PRECISION = 6 # 6 significant digits should be precise enough for these calculations
+  BIGDECIMAL_PRECISION = 6 # 6 significant digits should be precise enough
   CONSECUTIVE_MULTIPLIER = 1.3
   INITIAL_HUMUS_BALANCE = 0
 
-  def initialize(*crop_values)
-    @crop_values = crop_values
+  def initialize(*crop_fields)
+    @crop_fields = crop_fields
   end
 
   def calculate
-    crops_with_consecutive_deltas.inject(INITIAL_HUMUS_BALANCE) do |sum, crop|
-      sum + crop[:humus_delta]
+    crop_fields.map do |field|
+      crops = crops_for field
+      crop_deltas = crop_deltas_for crops
+      humus_balance = humus_balance_for crop_deltas
+
+      {
+        field_id: field[:field_id],
+        humus_balance: humus_balance,
+      }
     end
   end
 
   private
 
-  def crops_service
-    @crops_service ||= CropsService.instance
-  end
-
-  def crops
-    @crops ||= crop_values.map { |crop_value|
+  def crops_for(field)
+    field[:crop_values].map { |crop_value|
       crops_service.get_crop(crop_value).to_h.deep_dup
     }
   end
 
-  def crops_with_consecutive_deltas
+  def crop_deltas_for(crops)
     crops.each_with_index.map { |crop, index|
       previous_crop = crops[index - 1]
       current_crop = crop
@@ -43,6 +46,16 @@ class HumusBalanceService
 
       current_crop
     }
+  end
+
+  def humus_balance_for(crop_deltas)
+    crop_deltas.inject(INITIAL_HUMUS_BALANCE) { |sum, crop|
+      sum + crop[:humus_delta]
+    }
+  end
+
+  def crops_service
+    @crops_service ||= CropsService.instance
   end
 
   def as_bigdecimal(value)

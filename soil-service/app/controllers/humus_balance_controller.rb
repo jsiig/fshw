@@ -4,7 +4,7 @@ class HumusBalanceController < ActionController::Base
   def calculate
     render json: {
       error: false,
-      humus_balance: humus_balance_service.calculate,
+      humus_balances: humus_balance_service.calculate,
     }, status: 200
   rescue CropNotFoundError
     render json: {
@@ -16,6 +16,9 @@ class HumusBalanceController < ActionController::Base
   private
 
   def humus_balance_service
-    HumusBalanceService.new(*params[:crop_values])
+    # If we were doing an insert operation, this'd have to use
+    # strong params. However, since this is a simple calculation
+    # not writing to any DB, this is fine for now.
+    HumusBalanceService.new(*params[:fields_with_crop_values])
   end
 end
