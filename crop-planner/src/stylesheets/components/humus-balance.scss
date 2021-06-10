@@ -1,0 +1,52 @@
+@keyframes humusBalanceUpAnimation {
+  0% {
+    color: $dark;
+    background-color: transparent;
+  }
+  10% {
+    color: $white;
+    background-color: $light-green;
+  }
+  100% {
+    color: $dark;
+    background-color: transparent;
+  }
+}
+
+@keyframes humusBalanceDownAnimation {
+  0% {
+    color: $dark;
+    background-color: transparent;
+  }
+  10% {
+    color: $white;
+    background-color: $light-red;
+  }
+  100% {
+    color: $dark;
+    background-color: transparent;
+  }
+}
+
+.humus-balance {
+  &__direction {
+    &--up {
+      color: $dark;
+
+      &.animating {
+        animation-name: humusBalanceUpAnimation;
+        animation-duration: 2000ms;
+        animation-iteration-count: 1;
+      }
+    }
+    &--down {
+      color: $dark;
+
+      &.animating {
+        animation-name: humusBalanceDownAnimation;
+        animation-duration: 2000ms;
+        animation-iteration-count: 1;
+      }
+    }
+  }
+}
