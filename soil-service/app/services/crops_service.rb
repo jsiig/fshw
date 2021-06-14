@@ -21,4 +21,16 @@ class CropsService
   def fetch_all_crops
     CROPS
   end
+
+  # Gets crop by `value`, treated like a unique id here
+  def get_crop(value)
+    crop = CROPS.detect { |crop| crop[:value] == value }
+    return crop unless crop.nil?
+
+    raise CropNotFoundError
+  end
+end
+
+# Inline dummy error class, ideally this should be in a separate file
+class CropNotFoundError < StandardError
 end

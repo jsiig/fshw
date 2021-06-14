@@ -15,4 +15,15 @@ RSpec.describe CropsService do
       )
     end
   end
+
+  describe '#get_crop' do
+    subject(:instance) { described_class.instance }
+    it 'returns correct crop by value' do
+      expect(instance.get_crop(1)).to eq({ value: 1, label: 'Spring Wheat', humus_delta: -2 })
+    end
+
+    it 'raises error when crop not found' do
+      expect { instance.get_crop(999) }.to raise_error(CropNotFoundError)
+    end
+  end
 end

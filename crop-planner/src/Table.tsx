@@ -2,35 +2,95 @@ import { PureComponent } from 'react'
 import { sortBy } from 'lodash'
 
 import CropSelect from './CropSelect'
-import { Crop, Field, SeasonalCrop } from './types'
-import { fetchCrops, fetchFields } from './api'
+import {
+  Crop,
+  Field,
+  SeasonalCrop,
+  HumusBalances,
+} from './types'
+import {
+  fetchCrops,
+  fetchFields,
+  calculateHumusBalance
+} from './api'
 import buildNewFieldsState from './buildNewFieldsState'
+import HumusBalanceComponent from './HumusBalance'
+import TableError from './TableError';
 
 type Props = {}
 
 type State = {
   allCrops: Array<Crop>,
-  fields: Array<Field>
+  fields: Array<Field>,
+  humusBalances: HumusBalances,
+  errorMessage: string | null | undefined,
 }
 
 export default class Table extends PureComponent<Props, State> {
   constructor(props: Props) {
-    super(props)
+    super(props);
 
     this.state = {
       allCrops: [],
       fields: [],
+      humusBalances: {},
+      errorMessage: null
+    };
+  }
+
+  componentDidMount = async () => {
+    const fields = await fetchFields();
+    const allCrops = await fetchCrops();
+
+    await this.requestNewHumusBalanceForFields(fields);
+
+    this.setState({
+      fields,
+      allCrops,
+    });
+  }
+
+  requestNewHumusBalanceForFields = async (fields: Array<Field> | undefined) => {
+    if (!fields || !fields.length) return;
+
+    try {
+      const humusBalancesResponse = await calculateHumusBalance(
+        fields.map(field => ({
+          field_id: field.id,
+          crop_values: sortBy(field.crops, crop => crop.year)
+            .map((crop: SeasonalCrop) => crop && crop.crop ? crop.crop.value : 0)
+        }))
+      );
+
+      let assignableHumusBalances: HumusBalances = {};
+
+      if (humusBalancesResponse.error) {
+        this.setError(humusBalancesResponse.message);
+      } else if (humusBalancesResponse.humus_balances) {
+        humusBalancesResponse.humus_balances.forEach(hb => {
+          assignableHumusBalances[hb.field_id] = {
+            ...hb,
+            humus_balance: +hb.humus_balance // Cast to number
+          };
+        });
+
+        this.setState({
+          errorMessage: null,
+          humusBalances: assignableHumusBalances,
+        });
+      }
+    } catch (e) {
+      this.setError('Something went wrong');
     }
   }
 
-  componentDidMount = async () =>
-    this.setState({
-      fields: await fetchFields(),
-      allCrops: await fetchCrops(),
-    })
-
   render = () =>
     <div className="table">
+      <TableError
+        onComplete={this.clearError}
+        errorMessage={this.state.errorMessage}
+      />
+
       <div className="table__row table__row--header">
         <div className="table__cell">Field name</div>
         <div className="table__cell table__cell--right">Field area (ha)</div>
@@ -52,11 +112,14 @@ export default class Table extends PureComponent<Props, State> {
 
       {sortBy(field.crops, crop => crop.year).map(seasonalCrop => this.renderCropCell(field, seasonalCrop))}
 
-      <div className="table__cell table__cell--right">--</div>
+      <HumusBalanceComponent
+        className="table__cell table__cell--right"
+        humusBalance={this.getHumusBalanceByFieldId(field.id)}
+      />
     </div>
 
   renderCropCell = (field: Field, seasonalCrop: SeasonalCrop) =>
-    <div className="table__cell table__cell--center table__cell--with-select">
+    <div className="table__cell table__cell--center table__cell--with-select" key={seasonalCrop.year}>
       <CropSelect
         selectedCrop={seasonalCrop.crop}
         allCrops={this.state.allCrops}
@@ -64,8 +127,23 @@ export default class Table extends PureComponent<Props, State> {
       />
     </div>
 
-  changeFieldCrop = (newCrop: Crop | null, fieldId: number, cropYear: number) =>
+  setError = (errorMessage: string | null | undefined) => this.setState({errorMessage})
+
+  clearError = () => this.setError(null)
+
+  changeFieldCrop = (newCrop: Crop | null, fieldId: number, cropYear: number) => {
     this.setState(
       buildNewFieldsState(this.state.fields, newCrop, fieldId, cropYear),
+      async () => {
+        const field = this.state.fields.find(field => field.id === fieldId);
+        if (field) await this.requestNewHumusBalanceForFields([field]);
+      }
     )
+  }
+
+  getHumusBalanceByFieldId = (field_id: number): number | undefined => {
+    const {humusBalances} = this.state;
+    const humusBalance = humusBalances[field_id];
+    return humusBalance && humusBalance.humus_balance;
+  }
 }
