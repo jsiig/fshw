@@ -3,8 +3,6 @@ import { shallow } from 'enzyme'
 import HumusBalance from './HumusBalance'
 import { fetchCrops, fetchFields } from './api'
 
-jest.mock('./api')
-
 describe('<HumusBalance />', () => {
   const humusBalance = 2;
 

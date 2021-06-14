@@ -24,13 +24,9 @@ export type HumusBalances = {
 export type HumusBalancesResponseArray = Array<HumusBalance>
 
 export type HumusBalancesResponse = {
-  humus_balances: HumusBalancesResponseArray,
-  error: boolean
-}
-
-export type HumusBalancesError = {
+  humus_balances?: HumusBalancesResponseArray,
   error: boolean,
-  message: string,
+  message?: string,
 }
 
 export type FieldWithCropValues = {

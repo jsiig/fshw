@@ -13,6 +13,8 @@
 .table {
   @include cells(12);
 
+  position: relative;
+
   border: $grey-border;
   border-radius: $border-radius;
 }
@@ -93,4 +95,33 @@
 .table__row--header .table__cell {
   border-bottom-color: $grey-3;
   border-bottom-width: 2px;
+}
+
+/**
+ * Error handling
+ */
+
+.table__error {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  opacity: 0;
+  max-height: 0;
+  width: 100%;
+  top: 0;
+  right: 0;
+  left: 0;
+  text-align: center;
+  padding: 10px;
+  background: $red;
+  color: $white;
+  z-index: 1;
+
+  &--visible {
+    // Transition only in one direction - intentionally.
+    // Clear error without transition.
+    transition: opacity 0.5s ease-in-out, max-height 0.5s ease-in-out;
+    max-height: 40px;
+    opacity: 1;
+  }
 }

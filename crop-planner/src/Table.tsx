@@ -7,12 +7,15 @@ import {
   Field,
   SeasonalCrop,
   HumusBalances,
-  HumusBalancesError,
-  HumusBalancesResponse,
 } from './types'
-import {calculateHumusBalance, fetchCrops, fetchFields} from './api'
+import {
+  fetchCrops,
+  fetchFields,
+  calculateHumusBalance
+} from './api'
 import buildNewFieldsState from './buildNewFieldsState'
 import HumusBalanceComponent from './HumusBalance'
+import TableError from './TableError';
 
 type Props = {}
 
@@ -20,7 +23,7 @@ type State = {
   allCrops: Array<Crop>,
   fields: Array<Field>,
   humusBalances: HumusBalances,
-  error: string | null,
+  errorMessage: string | null | undefined,
 }
 
 export default class Table extends PureComponent<Props, State> {
@@ -31,7 +34,7 @@ export default class Table extends PureComponent<Props, State> {
       allCrops: [],
       fields: [],
       humusBalances: {},
-      error: null
+      errorMessage: null
     }
   }
 
@@ -51,7 +54,7 @@ export default class Table extends PureComponent<Props, State> {
     if (!fields || !fields.length) return;
 
     try {
-      const humusBalancesResponse: HumusBalancesResponse = await calculateHumusBalance(
+      const humusBalancesResponse = await calculateHumusBalance(
         fields.map(field => ({
           field_id: field.id,
           crop_values: sortBy(field.crops, crop => crop.year)
@@ -61,31 +64,32 @@ export default class Table extends PureComponent<Props, State> {
 
       let assignableHumusBalances: HumusBalances = {};
 
-      humusBalancesResponse.humus_balances.forEach(hb => {
-        assignableHumusBalances[hb.field_id] = {
-          ...hb,
-          humus_balance: +hb.humus_balance // Cast to number
-        };
-      });
+      if (humusBalancesResponse.error) {
+        this.setError(humusBalancesResponse.message);
+      } else if (humusBalancesResponse.humus_balances) {
+        humusBalancesResponse.humus_balances.forEach(hb => {
+          assignableHumusBalances[hb.field_id] = {
+            ...hb,
+            humus_balance: +hb.humus_balance // Cast to number
+          };
+        });
 
-      this.setState({
-        humusBalances: {
-          ...this.state.humusBalances,
-          ...assignableHumusBalances,
-        },
-        error: null,
-      });
+        this.setState({
+          errorMessage: null,
+          humusBalances: assignableHumusBalances,
+        });
+      }
     } catch (e) {
-      const humusBalancesError: HumusBalancesError = e;
-
-      this.setState({
-        error: humusBalancesError.message,
-      });
+      this.setError('Something went wrong');
     }
   }
 
   render = () =>
     <div className="table">
+      <TableError
+        onComplete={this.clearError}
+        errorMessage={this.state.errorMessage}
+      />
 
       <div className="table__row table__row--header">
         <div className="table__cell">Field name</div>
@@ -122,6 +126,10 @@ export default class Table extends PureComponent<Props, State> {
         onChange={newCrop => this.changeFieldCrop(newCrop, field.id, seasonalCrop.year)}
       />
     </div>
+
+  setError = (errorMessage: string | null | undefined) => this.setState({errorMessage})
+
+  clearError = () => this.setError(null)
 
   changeFieldCrop = (newCrop: Crop | null, fieldId: number, cropYear: number) => {
     this.setState(

@@ -10,7 +10,7 @@ class HumusBalanceController < ActionController::Base
     render json: {
       error: true,
       message: 'Crop not found',
-    }, status: 404
+    }, status: 400
   end
 
   private
