@@ -28,14 +28,14 @@ type State = {
 
 export default class Table extends PureComponent<Props, State> {
   constructor(props: Props) {
-    super(props)
+    super(props);
 
     this.state = {
       allCrops: [],
       fields: [],
       humusBalances: {},
       errorMessage: null
-    }
+    };
   }
 
   componentDidMount = async () => {
@@ -136,7 +136,7 @@ export default class Table extends PureComponent<Props, State> {
       buildNewFieldsState(this.state.fields, newCrop, fieldId, cropYear),
       async () => {
         const field = this.state.fields.find(field => field.id === fieldId);
-        if (field) await this.requestNewHumusBalanceForFields([field])
+        if (field) await this.requestNewHumusBalanceForFields([field]);
       }
     )
   }

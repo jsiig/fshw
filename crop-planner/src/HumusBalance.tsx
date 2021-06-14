@@ -67,7 +67,7 @@ export default class HumusBalance extends PureComponent<Props, State> {
       });
     } else {
       this.setState({
-        animationClassName: 'animating'
+        animationClassName: 'animating',
       });
     }
   }
